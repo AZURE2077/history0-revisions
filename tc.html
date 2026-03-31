@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms & Conditions — HR Unblocked Games</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --red:    #531020;
+      --red-mid: #7a1830;
+      --red-glow: #c0243e;
+      --bg:     #0a0608;
+      --surface: #110a0d;
+      --surface2: #1a0c10;
+      --border: #3a1220;
+      --text:   #e8d0d6;
+      --muted:  #9a7080;
+      --accent: #ff3355;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.07) 2px,
+        rgba(0,0,0,0.07) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Top bar */
+    .top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--red), var(--accent), var(--red));
+      z-index: 200;
+      animation: shimmer 3s linear infinite;
+      background-size: 200% 100%;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    /* Hero */
+    .hero {
+      padding: 80px 24px 48px;
+      text-align: center;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+      background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(83,16,32,0.35) 0%, transparent 70%);
+    }
+
+    .hero-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.2s forwards;
+    }
+
+    .hero h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: clamp(36px, 7vw, 72px);
+      line-height: 1.05;
+      letter-spacing: -1px;
+      color: #fff;
+      text-shadow: 0 0 40px rgba(255,51,85,0.3);
+      opacity: 0;
+      animation: fadeUp 0.6s 0.35s forwards;
+    }
+
+    .hero h1 span {
+      color: var(--accent);
+    }
+
+    .hero-meta {
+      margin-top: 20px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.5s forwards;
+    }
+
+    .agreement-banner {
+      margin: 32px auto 0;
+      max-width: 700px;
+      padding: 14px 24px;
+      background: rgba(83,16,32,0.4);
+      border: 1px solid var(--red-mid);
+      border-left: 3px solid var(--accent);
+      font-size: 13px;
+      color: #f0b0b8;
+      font-family: 'Share Tech Mono', monospace;
+      line-height: 1.6;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.65s forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Layout */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 56px 24px 80px;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 48px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s, transform 0.5s;
+    }
+    .section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-num {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 2px;
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
+
+    .section-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 20px;
+      letter-spacing: 0.5px;
+      color: #fff;
+    }
+
+    .section-body {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.8;
+    }
+
+    .section-body p + p {
+      margin-top: 10px;
+    }
+
+    /* Lists */
+    .section-body ul {
+      list-style: none;
+      margin: 12px 0;
+      padding: 0;
+    }
+
+    .section-body ul li {
+      padding: 6px 0 6px 20px;
+      position: relative;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(58,18,32,0.4);
+    }
+
+    .section-body ul li:last-child {
+      border-bottom: none;
+    }
+
+    .section-body ul li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* Warning / special blocks */
+    .warn-block {
+      margin: 16px 0;
+      padding: 14px 18px;
+      background: rgba(255,51,85,0.07);
+      border: 1px solid rgba(255,51,85,0.25);
+      border-left: 3px solid var(--accent);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      color: #f0a0b0;
+      line-height: 1.7;
+    }
+
+    .warn-block strong {
+      color: var(--accent);
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .info-block {
+      margin: 16px 0;
+      padding: 14px 18px;
+      background: rgba(83,16,32,0.2);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .info-block strong {
+      color: var(--text);
+    }
+
+    /* Game exemptions */
+    .game-card {
+      margin: 10px 0;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .game-card-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      background: var(--red);
+      color: #ffaaaa;
+      padding: 3px 8px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .game-card-text {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    .game-card-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    /* Rules reference */
+    .rule-ref {
+      margin: 8px 0;
+      padding: 10px 14px;
+      background: var(--surface);
+      border-left: 2px solid var(--border);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .rule-ref em {
+      color: var(--text);
+      font-style: normal;
+    }
+
+    /* Epilepsy */
+    .epilepsy-block {
+      padding: 20px 24px;
+      background: linear-gradient(135deg, rgba(255,200,0,0.07), rgba(255,51,85,0.07));
+      border: 1px solid rgba(255,200,0,0.2);
+      border-left: 3px solid #ffcc00;
+    }
+
+    .epilepsy-block .warn-icon {
+      font-size: 22px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    /* Contact */
+    .contact-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255,51,85,0.3);
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .contact-link:hover {
+      color: #fff;
+      border-color: #fff;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      background: radial-gradient(ellipse 50% 100% at 50% 100%, rgba(83,16,32,0.2) 0%, transparent 70%);
+    }
+
+    footer .footer-logo {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--red-glow);
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--red-mid); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    @media (max-width: 600px) {
+      .hero { padding-top: 60px; }
+      .container { padding: 40px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<div class="hero">
+  <p class="hero-label">Legal Document — Rev. 1.0</p>
+  <h1>HR Unblocked <span>Games</span><br>Terms &amp; Conditions</h1>
+  <p class="hero-meta">EFFECTIVE DATE: MARCH 13, 2026 &nbsp;|&nbsp; ALL USERS MUST READ</p>
+  <div class="agreement-banner">
+    BY USING THIS SITE, ANY REMAKES OF THE SITE OR ANY OF THE WHATSAPP CHANNELS YOU AGREE TO THESE T&amp;Cs.
+    IF YOU DO NOT AGREE, PLEASE REFRAIN FROM USING THE SITE(S)/CHANNEL(S).
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 1 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">Acceptance of Terms</h2>
+    </div>
+    <div class="section-body">
+      <p>By accessing or using HR Unblocked Games Channel (or the "Site"), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the Site. These terms apply to all visitors and users of the Site.</p>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Description of Service</h2>
+    </div>
+    <div class="section-body">
+      <p>HR Unblocked Games is a browser-based games platform that provides access to a curated collection of free online games. The Site is intended for entertainment and educational purposes. Games are hosted or linked from third-party sources and are accessed via embedded frames.</p>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Eligibility and Appropriate Use</h2>
+    </div>
+    <div class="section-body">
+      <p>The Site is intended for general audiences. By using the Site, you confirm that:</p>
+      <ul>
+        <li>You are using the Site in a manner permitted by your school, workplace, or network administrator.</li>
+        <li>You will not use the Site to violate any applicable laws, rules, or regulations.</li>
+        <li>You understand that bypassing network restrictions may be against your institution's acceptable use policy, and you take full responsibility for any consequences that result.</li>
+        <li>The Owner and any of the Admins and Contributors do <strong>NOT</strong> ask you to play games during Curriculum hours and we also ask you to adhere to your organisation's Policies.</li>
+        <li>Curriculum hours do <strong>not</strong> include Recess, Lunch, or any hours with a given break.</li>
+      </ul>
+      <div class="warn-block">
+        <strong>Age Restriction</strong>
+        This site is STRICTLY for users over the age of 13.
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">Third-Party Games and Content</h2>
+    </div>
+    <div class="section-body">
+      <p>The games available on this Site are sourced from third-party developers and platforms. HR Unblocked Games does not own, develop, or maintain these games. We are not responsible for:</p>
+      <ul>
+        <li>The content, functionality, or availability of any third-party game.</li>
+        <li>Any data collected by third-party game providers.</li>
+      </ul>
+      <div class="info-block">
+        We recommend that users do <strong>not</strong> enter any personal information into third-party games.
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2 class="section-title">Intellectual Property</h2>
+    </div>
+    <div class="section-body">
+      <p>All original content on this Site, including the site design, layout, branding, and code, is the property of HR Unblocked Games. Game titles, artwork, and assets remain the intellectual property of their respective owners. You may not reproduce, distribute, or create derivative works from the Site's original content without express written permission.</p>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2 class="section-title">Data Collection and Firebase</h2>
+    </div>
+    <div class="section-body">
+      <p>This Site uses Google Firebase Realtime Database for limited administrative functionality, including the display of announcements. We do not collect, store, or share personal user data. No account registration is required to use the Site.</p>
+      <div class="info-block">
+        <strong>Privacy Statement:</strong> HR Unblocked Games does not collect personally identifiable information from its users. No cookies, tracking pixels, or analytics tools are used beyond what is inherently provided by Google Firebase. Your usage of Firebase-powered features may be subject to <a class="contact-link" href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a> and Terms of Service.
+      </div>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2 class="section-title">Admin Features</h2>
+    </div>
+    <div class="section-body">
+      <p>Certain administrative features of this Site, including the ability to post global announcements and toggle site-wide effects, are restricted to authorised administrators. Unauthorised attempts to access admin functionality are prohibited.</p>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2 class="section-title">Disclaimer of Warranties</h2>
+    </div>
+    <div class="section-body">
+      <p>The Site is provided on an "as is" and "as available" basis without any warranties of any kind, either express or implied. We do not warrant that:</p>
+      <ul>
+        <li>The Site will be available at all times or free from errors.</li>
+        <li>The games will function correctly on all devices and browsers.</li>
+        <li>The Site will be free from viruses or other harmful components originating from third parties.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 9 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">09</span>
+      <h2 class="section-title">Limitation of Liability</h2>
+    </div>
+    <div class="section-body">
+      <p>To the fullest extent permitted by law, HR Unblocked Games Channel and its operators shall not be liable for any indirect, incidental, special, or consequential damages arising out of your use of or inability to use the Site, including but not limited to loss of data, disciplinary action from your institution, or any other damages.</p>
+    </div>
+  </div>
+
+  <!-- 10 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">10</span>
+      <h2 class="section-title">Changes to These Terms</h2>
+    </div>
+    <div class="section-body">
+      <p>We reserve the right to modify these Terms and Conditions at any time. Changes will be effective immediately upon posting to the Site. Your continued use of the Site after any changes constitutes your acceptance of the updated terms. It is your responsibility to review these terms periodically.</p>
+    </div>
+  </div>
+
+  <!-- 11 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">11</span>
+      <h2 class="section-title">Governing Law</h2>
+    </div>
+    <div class="section-body">
+      <p>These Terms and Conditions shall be governed by and construed in accordance with the laws of Singapore. Any disputes arising from your use of the Site shall be subject to the exclusive jurisdiction of the courts of Singapore.</p>
+    </div>
+  </div>
+
+  <!-- 12 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">12</span>
+      <h2 class="section-title">Contact</h2>
+    </div>
+    <div class="section-body">
+      <p>If you have any questions or concerns about these Terms and Conditions, or have a DMCA takedown request with proper documentation, please reach out to the site administrator:</p>
+      <div class="info-block" style="margin-top:14px;">
+        Email: <a class="contact-link" href="mailto:rodrickgatsy@gmail.com">rodrickgatsy@gmail.com</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 13 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">13</span>
+      <h2 class="section-title">Admin Rights Statement</h2>
+    </div>
+    <div class="section-body">
+      <p>HR Unblocked Games is an independently operated platform created for personal and entertainment purposes. The site administrators operate this platform in their personal capacity and are not acting on behalf of any institution or organisation.</p>
+      <p>A general-purpose link unblocker was previously available on this site. After review, it was determined that such a tool could facilitate access to content that may be inappropriate or in violation of users' institutional policies. This feature has been permanently removed.</p>
+    </div>
+  </div>
+
+  <!-- 14 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">14</span>
+      <h2 class="section-title">Content Advisories</h2>
+    </div>
+    <div class="section-body">
+      <p>Some games on any version or history revision of this site may appear to be non-compliant with content standards. However, most games are compliant with ESRB ratings and carry a maximum rating of <strong>TEEN</strong>, with the following exceptions:</p>
+
+      <div class="game-card">
+        <div>
+          <div class="game-card-tag">REMOVED</div>
+        </div>
+        <div class="game-card-text">
+          <div class="game-card-title">GTA Vice City</div>
+          We are aware of this situation and have taken the game down. It does not work now.
+        </div>
+      </div>
+
+      <div class="game-card">
+        <div>
+          <div class="game-card-tag">UNRATED</div>
+        </div>
+        <div class="game-card-text">
+          <div class="game-card-title">Gambling Sim(ulator)</div>
+          This is a game for educational and entertainment purposes only. It is unrated; however, we strongly recommend that all users do not gamble in real life unless over the age of 21.
+        </div>
+      </div>
+
+      <div class="game-card">
+        <div>
+          <div class="game-card-tag">ADVISORY</div>
+        </div>
+        <div class="game-card-text">
+          <div class="game-card-title">Five Nights At Epstein's</div>
+          This is a fan-made parody game included for entertainment purposes. It does not contain illegal content. Users are advised to exercise their own discretion. HR Unblocked Games does not endorse or promote any real-world individuals or events referenced in the game's title or content.
+        </div>
+      </div>
+
+      <div class="warn-block" style="margin-top:20px;">
+        <strong>General Advisory</strong>
+        We advise all users not to violate their respective organisation or school rules while using any site features (e.g. the Panic Button).
+      </div>
+
+      <p style="margin-top:20px; font-family:'Rajdhani',sans-serif; font-size:15px; color:#aaa; letter-spacing:0.5px;">References — Organisation Rules</p>
+      <div class="rule-ref"><em>7.1</em> — Students are allowed to use computing devices, including PLDs, during school hours solely for educational purposes.</div>
+      <div class="rule-ref"><em>7.2</em> — Students are allowed to use computing devices, including PLDs, during lessons only with the teacher's instruction.</div>
+      <div class="rule-ref"><em>7.5</em> — Students must not post or access materials with pornographic or inappropriate content.</div>
+    </div>
+  </div>
+
+  <!-- 15 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">15</span>
+      <h2 class="section-title">Epilepsy Warning</h2>
+    </div>
+    <div class="section-body">
+      <div class="epilepsy-block">
+        <span class="warn-icon">⚠️</span>
+        <p>Some games might contain scenes with flashing lights. If you have epilepsy or are sensitive to flashing visuals, please exercise caution when using this website. Consult with a doctor before accessing games that may contain such content.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-logo">HR UNBLOCKED GAMES</div>
+  <p>Terms &amp; Conditions — Effective March 13, 2026</p>
+  <p style="margin-top:6px;">All rights reserved. Contact: <a class="contact-link" href="mailto:rodrickgatsy@gmail.com">rodrickgatsy@gmail.com</a></p>
+  <p style="margin-top:14px; font-size:10px; opacity:0.45; max-width:600px; margin-left:auto; margin-right:auto; line-height:1.6;">Fine print and supplementary documentation pertaining to any legal dispute may be requested from the owner via the contact email address above.</p>
+</footer>
+
+<script>
+  // Scroll-triggered section reveals
+  const sections = document.querySelectorAll('.section');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

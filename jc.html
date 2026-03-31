@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join Our Channel!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Press Start 2P', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      image-rendering: pixelated;
+    }
+
+    /* Pixelated dither background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle, #222 1px, transparent 1px);
+      background-size: 6px 6px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .card {
+      position: relative;
+      max-width: 680px;
+      width: 100%;
+      padding: 40px 32px;
+      background: #000;
+      /* Pixel border via box-shadow */
+      box-shadow:
+        0 0 0 4px #fff,
+        0 0 0 8px #000,
+        0 0 0 12px #fff;
+    }
+
+    /* Pixel corner decorations */
+    .card::before, .card::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: #000;
+      border: 4px solid #fff;
+    }
+    .card::before { top: -8px; left: -8px; }
+    .card::after  { bottom: -8px; right: -8px; }
+
+    h1 {
+      font-size: clamp(14px, 3vw, 24px);
+      color: #fff;
+      line-height: 1.8;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      text-shadow: 4px 4px 0 #555;
+    }
+
+    h1 span {
+      color: #aaa;
+      display: block;
+      font-size: clamp(18px, 4vw, 32px);
+      margin-top: 8px;
+      text-shadow: 4px 4px 0 #333;
+    }
+
+    .divider {
+      width: 100%;
+      height: 4px;
+      background: repeating-linear-gradient(
+        90deg,
+        #fff 0px, #fff 8px,
+        #000 8px, #000 16px
+      );
+      margin: 24px 0;
+    }
+
+    p {
+      font-size: 10px;
+      color: #aaa;
+      line-height: 2;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    a.btn {
+      display: block;
+      padding: 14px 16px;
+      background: #fff;
+      color: #000;
+      text-decoration: none;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      word-break: break-all;
+      line-height: 1.8;
+      /* Pixel button shadow */
+      box-shadow: 4px 4px 0 #888;
+      transition: box-shadow 0.1s, transform 0.1s;
+      text-transform: lowercase;
+    }
+
+    a.btn:hover {
+      background: #ddd;
+      box-shadow: 2px 2px 0 #888;
+      transform: translate(2px, 2px);
+    }
+
+    a.btn:active {
+      box-shadow: none;
+      transform: translate(4px, 4px);
+    }
+
+    .blink {
+      display: inline-block;
+      margin-top: 28px;
+      font-size: 10px;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      animation: blink 1s step-start infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>GO JOIN OUR<span>CHANNEL!</span></h1>
+    <div class="divider"></div>
+    <p>Check us out on WhatsApp:</p>
+    <div class="links">
+      <a class="btn" href="#" onclick="window.open('https://tinyurl.com/simplygame2', '_blank'); return false;">https://tinyurl.com/simplygame2</a>
+      <a class="btn" href="#" onclick="window.open('https://whatsapp.com/channel/0029Vb7AlgDIHphCNdOufY0e', '_blank'); return false;">https://whatsapp.com/channel/0029Vb7AlgDIHphCNdOufY0e</a>
+    </div>
+    <div class="blink">► press link to join ◄</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Channel Exclusives!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@700&family=Exo+2:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0608;
+      color: #e8d0d6;
+      font-family: 'Exo 2', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .card {
+      max-width: 680px;
+      padding: 48px 40px;
+      background: #1a0c10;
+      border: 1px solid #3a1220;
+      border-top: 3px solid #ff3355;
+    }
+
+    h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(32px, 6vw, 58px);
+      color: #fff;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+
+    h1 span { color: #ff3355; }
+
+    p {
+      font-size: 16px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: #c8a0aa;
+      margin-bottom: 32px;
+    }
+
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    a.btn {
+      display: block;
+      padding: 14px 24px;
+      background: #531020;
+      color: #fff;
+      text-decoration: none;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px;
+      letter-spacing: 1px;
+      border: 1px solid #7a1830;
+      transition: background 0.2s, border-color 0.2s;
+      word-break: break-all;
+    }
+
+    a.btn:hover { background: #7a1830; border-color: #ff3355; }
+
+    .or-text {
+      margin-top: 28px;
+      font-size: 14px;
+      font-weight: 300;
+      color: #c8a0aa;
+      line-height: 1.8;
+    }
+    .or-text a {
+      color: #ff3355;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,51,85,0.3);
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .or-text a:hover { color: #fff; border-color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Channel <span>Members Only!</span></h1>
+    <p>To access, go check out our WhatsApp channel:</p>
+    <div class="links">
+      <a class="btn" href="#" onclick="window.open('https://tinyurl.com/simplygame2', '_blank'); return false;">https://tinyurl.com/simplygame2</a>
+      <a class="btn" href="#" onclick="window.open('https://whatsapp.com/channel/0029Vb7AlgDIHphCNdOufY0e', '_blank'); return false;">https://whatsapp.com/channel/0029Vb7AlgDIHphCNdOufY0e</a>
+    </div>
+    <p class="or-text">or... you could check out our new site at<br>
+      <a href="#" onclick="window.open('https://history-revisions.netlify.app', '_blank'); return false;">https://history-revisions.netlify.app</a>
+    </p>
+  </div>
+</body>
+</html>

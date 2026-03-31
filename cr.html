@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<!-- Ultimate Game Stash file-->
+<!-- For the regularly updating doc go to https://docs.google.com/document/d/1_FmH3BlSBQI7FGgAQL59-ZPe8eCxs35wel6JUyVaG8Q/ -->
+
+<html lang="en-us">
+<base href="https://cdn.jsdelivr.net/gh/bubbls/clusterarchive/">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Unity WebGL Player | Cluster Rush</title>
+  <link href="TemplateData/style.css" rel="stylesheet">
+  <script src="TemplateData/UnityProgress.js" type="text/javascript"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #222C36;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .template-wrap {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    canvas#canvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    /* ── Mobile D-pad overlay ── */
+    #mobile-controls {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 220px;
+      z-index: 9999;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* Show only on touch devices */
+    @media (pointer: coarse) {
+      #mobile-controls { display: block; }
+    }
+
+    .dpad {
+      position: absolute;
+      left: 24px;
+      bottom: 24px;
+      width: 160px;
+      height: 160px;
+      pointer-events: all;
+    }
+
+    .dpad-btn {
+      position: absolute;
+      width: 52px;
+      height: 52px;
+      background: rgba(255,255,255,0.18);
+      border: 2px solid rgba(255,255,255,0.35);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #fff;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.1s;
+    }
+
+    .dpad-btn:active,
+    .dpad-btn.pressed {
+      background: rgba(255,255,255,0.40);
+    }
+
+    .dpad-up    { top: 0;   left: 54px; }
+    .dpad-down  { bottom: 0; left: 54px; }
+    .dpad-left  { top: 54px; left: 0;   }
+    .dpad-right { top: 54px; right: 0;  }
+
+    .action-btns {
+      position: absolute;
+      right: 24px;
+      bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: all;
+    }
+
+    .action-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      font-size: 13px;
+      font-weight: bold;
+      font-family: sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.1s;
+    }
+
+    .action-btn:active,
+    .action-btn.pressed {
+      background: rgba(255,255,255,0.45);
+    }
+
+    .btn-jump  { background: rgba(80, 160, 255, 0.35); }
+    .btn-pause { background: rgba(255, 200, 60, 0.30); font-size: 18px; }
+  </style>
+</head>
+<body class="template">
+  <div class="template-wrap clear">
+    <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  </div>
+
+  <!-- Mobile touch controls -->
+  <div id="mobile-controls">
+    <div class="dpad">
+      <div class="dpad-btn dpad-up"    data-key="ArrowUp"    data-code="ArrowUp"    data-keycode="38">▲</div>
+      <div class="dpad-btn dpad-left"  data-key="ArrowLeft"  data-code="ArrowLeft"  data-keycode="37">◀</div>
+      <div class="dpad-btn dpad-right" data-key="ArrowRight" data-code="ArrowRight" data-keycode="39">▶</div>
+      <div class="dpad-btn dpad-down"  data-key="ArrowDown"  data-code="ArrowDown"  data-keycode="40">▼</div>
+    </div>
+
+    <div class="action-btns">
+      <div class="action-btn btn-jump"  data-key=" " data-code="Space" data-keycode="32">JUMP</div>
+      <div class="action-btn btn-pause" data-key="Escape" data-code="Escape" data-keycode="27">⏸</div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    // ── Unity module config ──────────────────────────────────────────────────
+    var Module = {
+      TOTAL_MEMORY: 268435456,
+      errorhandler: null,
+      compatibilitycheck: null,
+      backgroundColor: "#222C36",
+      splashStyle: "Dark",
+      dataUrl: "Release/NG.data",
+      codeUrl: "Release/NG.js",
+      asmUrl: "Release/NG.asm.js",
+      memUrl: "Release/NG.mem",
+    };
+
+    // ── Mobile keyboard event helpers ────────────────────────────────────────
+    function fireKey(type, key, code, keyCode) {
+      var canvas = document.getElementById('canvas');
+      var target = canvas || document;
+      var evt = new KeyboardEvent(type, {
+        key: key,
+        code: code,
+        keyCode: keyCode,
+        which: keyCode,
+        bubbles: true,
+        cancelable: true,
+      });
+      target.dispatchEvent(evt);
+      // Also dispatch on document in case Unity listens there
+      if (target !== document) document.dispatchEvent(evt);
+    }
+
+    // ── Bind D-pad + action buttons ──────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+      var buttons = document.querySelectorAll('.dpad-btn, .action-btn');
+
+      buttons.forEach(function (btn) {
+        var key     = btn.dataset.key;
+        var code    = btn.dataset.code;
+        var keyCode = parseInt(btn.dataset.keycode, 10);
+        var held    = false;
+        var interval;
+
+        function startPress() {
+          if (held) return;
+          held = true;
+          btn.classList.add('pressed');
+          fireKey('keydown', key, code, keyCode);
+          // Hold repeat every 80 ms for movement keys
+          if (keyCode >= 37 && keyCode <= 40) {
+            interval = setInterval(function () {
+              fireKey('keydown', key, code, keyCode);
+            }, 80);
+          }
+        }
+
+        function endPress() {
+          if (!held) return;
+          held = false;
+          btn.classList.remove('pressed');
+          fireKey('keyup', key, code, keyCode);
+          clearInterval(interval);
+        }
+
+        btn.addEventListener('touchstart',  function (e) { e.preventDefault(); startPress(); }, { passive: false });
+        btn.addEventListener('touchend',    function (e) { e.preventDefault(); endPress();   }, { passive: false });
+        btn.addEventListener('touchcancel', function (e) { e.preventDefault(); endPress();   }, { passive: false });
+
+        // Mouse fallback (desktop testing)
+        btn.addEventListener('mousedown', startPress);
+        btn.addEventListener('mouseup',   endPress);
+        btn.addEventListener('mouseleave', endPress);
+      });
+
+      // Prevent the canvas from losing focus on touch so Unity keeps receiving events
+      var canvas = document.getElementById('canvas');
+      canvas.addEventListener('touchstart', function () { canvas.focus(); }, { passive: true });
+
+      // Keep canvas focused so keyboard events reach Unity
+      canvas.setAttribute('tabindex', '0');
+      canvas.focus();
+    });
+  </script>
+
+  <script src="Release/UnityLoader.js"></script>
+</body>
+</html>

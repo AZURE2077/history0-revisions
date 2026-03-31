@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Piano Tiles</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; font-family: 'DM Mono', monospace; color: #fff;
+    overflow: hidden; user-select: none;
+  }
+  #ui { display: flex; align-items: center; justify-content: space-between; width: 320px; margin-bottom: 12px; }
+  #score-label { font-size: 12px; color: #555; letter-spacing: 0.1em; text-transform: uppercase; }
+  #score { font-size: 28px; font-weight: 500; color: #fff; flex: 1; text-align: center; }
+  #pause-btn {
+    background: none; border: 0.5px solid #333; color: #777;
+    width: 34px; height: 34px; border-radius: 2px; font-size: 13px;
+    cursor: pointer; display: none; align-items: center; justify-content: center;
+    transition: border-color 0.15s, color 0.15s; flex-shrink: 0;
+  }
+  #pause-btn:hover { border-color: #666; color: #fff; }
+  #pause-btn.visible { display: flex; }
+  #game-wrap { position: relative; width: 320px; height: 540px; }
+  canvas { display: block; border-radius: 4px; cursor: pointer; }
+  .screen {
+    position: absolute; inset: 0; border-radius: 4px;
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  }
+  .screen.visible { display: flex; }
+  #start-screen  { background: rgba(10,10,10,0.95); }
+  #pause-screen  { background: rgba(10,10,10,0.88); }
+  #result-screen { background: rgba(10,10,10,0.95); }
+  .screen-title { font-family: 'DM Serif Display', serif; font-size: 34px; color: #fff; letter-spacing: -0.02em; }
+  .screen-sub   { font-size: 11px; color: #555; letter-spacing: 0.15em; text-transform: uppercase; }
+  .final-score  { font-size: 68px; font-weight: 500; color: #fff; line-height: 1; }
+  .stars        { font-size: 26px; letter-spacing: 4px; }
+  .best         { font-size: 11px; color: #444; letter-spacing: 0.1em; text-transform: uppercase; }
+  .diff-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 220px; margin-top: 4px;
+  }
+  .diff-btn {
+    background: none; border: 0.5px solid #333; color: #888;
+    padding: 10px 0; font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase; border-radius: 2px;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .diff-btn:hover { border-color: #555; color: #bbb; }
+  .diff-btn.selected { color: #fff; }
+  .diff-btn[data-d="easy"].selected      { border-color: #4ade80; color: #4ade80; }
+  .diff-btn[data-d="medium"].selected    { border-color: #facc15; color: #facc15; }
+  .diff-btn[data-d="hard"].selected      { border-color: #f97316; color: #f97316; }
+  .diff-btn[data-d="impossible"].selected{ border-color: #e879f9; color: #e879f9; }
+  .diff-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  #result-diff {
+    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 2px; border: 0.5px solid;
+  }
+  .action-btn {
+    background: #fff; color: #0a0a0a; border: none;
+    padding: 11px 32px; font-family: 'DM Mono', monospace; font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase; border-radius: 2px;
+    cursor: pointer; transition: background 0.15s, transform 0.1s; margin-top: 4px;
+  }
+  .action-btn:hover { background: #ddd; }
+  .action-btn:active { transform: scale(0.97); }
+  .ghost-btn {
+    background: none; border: 0.5px solid #2a2a2a; color: #555;
+    padding: 9px 32px; font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase; border-radius: 2px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .ghost-btn:hover { border-color: #555; color: #aaa; }
+  #perfect-label {
+    font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+    background: linear-gradient(90deg, #c084fc, #e879f9, #a855f7);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  /* Legend shown during play */
+  #legend {
+    display: none; align-items: center; gap: 14px;
+    width: 320px; margin-top: 8px; justify-content: center;
+  }
+  #legend.visible { display: flex; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #444; letter-spacing: 0.08em; }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 1px; }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <span id="score-label">Score</span>
+  <span id="score">0</span>
+  <button id="pause-btn">&#9646;&#9646;</button>
+</div>
+
+<div id="game-wrap">
+  <canvas id="canvas" width="320" height="540"></canvas>
+
+  <div class="screen visible" id="start-screen">
+    <div class="screen-title">Piano Tiles</div>
+    <div class="screen-sub">Select difficulty</div>
+    <div class="diff-grid">
+      <button class="diff-btn selected" data-d="easy"><div class="diff-dot"></div>Easy</button>
+      <button class="diff-btn" data-d="medium"><div class="diff-dot"></div>Medium</button>
+      <button class="diff-btn" data-d="hard"><div class="diff-dot"></div>Hard</button>
+      <button class="diff-btn" data-d="impossible"><div class="diff-dot"></div>Impossible</button>
+    </div>
+    <button class="action-btn" id="play-btn" style="margin-top:10px">Play</button>
+  </div>
+
+  <div class="screen" id="pause-screen">
+    <div class="screen-title">Paused</div>
+    <button class="action-btn" id="resume-btn">Resume</button>
+    <button class="ghost-btn" id="pause-home-btn">Home</button>
+  </div>
+
+  <div class="screen" id="result-screen">
+    <div class="screen-sub" id="result-sub">Game Over</div>
+    <div id="result-diff"></div>
+    <div id="perfect-label" style="display:none">✦ Perfect ✦</div>
+    <div class="stars" id="stars-display"></div>
+    <div class="final-score" id="final-score">0</div>
+    <div class="best" id="best-score"></div>
+    <button class="action-btn" id="retry-btn">Play Again</button>
+    <button class="ghost-btn" id="result-home-btn">Home</button>
+  </div>
+</div>
+
+<div id="legend">
+  <div class="legend-item"><div class="legend-swatch" style="background:#0c0c0c;border:1px solid #333"></div>Tap</div>
+  <div class="legend-item" id="legend-hold" style="display:none"><div class="legend-swatch" style="background:#0c2a1a;border:1px solid #3aff8a44"></div>Hold</div>
+  <div class="legend-item" id="legend-short" style="display:none"><div class="legend-swatch" style="background:#1a0c00;border:1px solid #f9731644"></div>Quick</div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+
+const W = 320, H = 540, COLS = 4, COL_W = W / COLS;
+const TILE_H_NORMAL = 135;
+const TILE_H_SHORT  = 68;
+const ROW_H         = TILE_H_NORMAL + 10;
+const MAX_SCORE     = 150;  // 75 tiles × 2 pts max
+const MAX_TILES     = 75;
+const HIT_LINE      = H - 90;
+// Perfect zone: middle 30% of tile height
+const PERFECT_ZONE_FRAC_TOP = 0.35;
+const PERFECT_ZONE_FRAC_BOT = 0.65;
+
+const NOTE_FREQS = [261.63, 329.63, 392.00, 493.88];
+
+const DIFFICULTIES = {
+  easy:       { startSpeed:6.0,  perScore:0.005, perTier:0.2,  color:'#4ade80', label:'Easy',       shortChance:0,    holdChance:0,    holdMs:0   },
+  medium:     { startSpeed:7.5,  perScore:0.012, perTier:0.35, color:'#facc15', label:'Medium',     shortChance:0,    holdChance:0.22, holdMs:220 },
+  hard:       { startSpeed:10.0,  perScore:0.022, perTier:0.6,  color:'#f97316', label:'Hard',       shortChance:0.35, holdChance:0.25, holdMs:180 },
+  impossible: { startSpeed:12.0,  perScore:0.04,  perTier:1.0,  color:'#e879f9', label:'Impossible', shortChance:0.55, holdChance:0.35, holdMs:140 },
+};
+
+let selectedDiff = 'easy';
+let audioCtx = null;
+function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+function playNote(freq) {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  const o1 = audioCtx.createOscillator(); o1.type='triangle'; o1.frequency.value=freq;
+  const o2 = audioCtx.createOscillator(); o2.type='sine';     o2.frequency.value=freq*2;
+  const g1=audioCtx.createGain(), g2=audioCtx.createGain(), m=audioCtx.createGain();
+  m.gain.value=0.75;
+  g1.gain.setValueAtTime(0,now); g1.gain.linearRampToValueAtTime(0.5,now+0.006);
+  g1.gain.exponentialRampToValueAtTime(0.12,now+0.15); g1.gain.exponentialRampToValueAtTime(0.001,now+1.2);
+  g2.gain.setValueAtTime(0,now); g2.gain.linearRampToValueAtTime(0.12,now+0.006);
+  g2.gain.exponentialRampToValueAtTime(0.001,now+0.3);
+  const d=audioCtx.createDelay(0.5); d.delayTime.value=0.09;
+  const dg=audioCtx.createGain(); dg.gain.value=0.12;
+  o1.connect(g1); g1.connect(m); o2.connect(g2); g2.connect(m);
+  m.connect(audioCtx.destination); m.connect(d); d.connect(dg); dg.connect(audioCtx.destination);
+  o1.start(now); o1.stop(now+1.3); o2.start(now); o2.stop(now+0.4);
+}
+
+// ---- State ----
+let tiles=[], score=0, bestScores={easy:0,medium:0,hard:0,impossible:0};
+let speed=2.5, running=false, paused=false, animId=null, nextSpawnY=0, tilesSpawned=0;
+let streak=0, golden=false, blue=false, purple=false;
+let hitBarFlash=0, pulse=0;
+let activeHoldTile=null, holdStartTime=0;
+let tilesHit=0;
+let perfectFlash=0, perfectFlashX=0, perfectFlashY=0; // for on-canvas "Perfect!" text
+
+function makeTile() {
+  const cfg = DIFFICULTIES[selectedDiff];
+  const isShort = Math.random() < cfg.shortChance;
+  const isHold  = !isShort && Math.random() < cfg.holdChance; // hold tiles are normal height only
+  return {
+    col:  Math.floor(Math.random() * COLS),
+    y:    nextSpawnY,
+    h:    isShort ? TILE_H_SHORT : TILE_H_NORMAL,
+    hold: isHold,
+    holdDuration: cfg.holdMs,
+    holdProgress: 0,   // 0..1
+    holding: false,
+    hit:  false,
+    flash:0
+  };
+}
+
+function spawnTile() {
+  if (tilesSpawned >= MAX_TILES) return;
+  tiles.push(makeTile());
+  nextSpawnY -= ROW_H;
+  tilesSpawned++;
+}
+
+function startGame() {
+  const cfg = DIFFICULTIES[selectedDiff];
+  tiles=[]; score=0; speed=cfg.startSpeed; nextSpawnY=-TILE_H_NORMAL; tilesSpawned=0;
+  streak=0; golden=false; blue=false; purple=false;
+  hitBarFlash=0; pulse=0; activeHoldTile=null;
+  tilesHit=0; perfectFlash=0;
+  document.getElementById('score').textContent='0';
+  const need = Math.ceil(H/ROW_H)+3;
+  for (let i=0;i<need;i++) spawnTile();
+  // Update legend
+  const hasHold  = cfg.holdChance > 0;
+  const hasShort = cfg.shortChance > 0;
+  document.getElementById('legend-hold').style.display  = hasHold  ? 'flex':'none';
+  document.getElementById('legend-short').style.display = hasShort ? 'flex':'none';
+}
+
+function getMode() {
+  if (purple) return 'purple';
+  if (blue)   return 'blue';
+  if (golden) return 'golden';
+  return 'normal';
+}
+
+const COLORS = {
+  purple: {bg:[160,80,220],  tile:[60,10,100],  edge:[200,100,255], hit:[180,100,255]},
+  blue:   {bg:[0,160,255],   tile:[0,30,80],    edge:[0,180,255],   hit:[0,180,255]},
+  golden: {bg:[255,200,0],   tile:[120,80,0],   edge:[255,190,0],   hit:[255,200,0]},
+};
+
+function update() {
+  const now = performance.now();
+
+  // Advance hold progress
+  if (activeHoldTile && activeHoldTile.holding && !activeHoldTile.hit) {
+    const elapsed = now - holdStartTime;
+    activeHoldTile.holdProgress = Math.min(1, elapsed / activeHoldTile.holdDuration);
+    if (activeHoldTile.holdProgress >= 1) {
+      // Hold complete — register as hit
+      registerHit(activeHoldTile);
+      activeHoldTile = null;
+    }
+  }
+
+  for (let t of tiles) {
+    t.y += speed;
+    if (t.flash > 0) t.flash -= 2;
+  }
+  if (hitBarFlash > 0) hitBarFlash--;
+  if (perfectFlash > 0) perfectFlash--;
+  pulse += 0.07;
+  if (tilesSpawned < MAX_TILES) {
+    if (Math.min(...tiles.map(t=>t.y)) > nextSpawnY+ROW_H) spawnTile();
+  }
+
+  // Check for actively-held tile exiting screen
+  if (activeHoldTile && activeHoldTile.y >= H) {
+    activeHoldTile = null;
+    doMiss(); return;
+  }
+
+  for (let t of tiles) {
+    if (!t.hit && t.y >= H) { doMiss(); return; }
+  }
+  tiles = tiles.filter(t => t.y < H + TILE_H_NORMAL);
+}
+
+function isPerfectHit(tile) {
+  const zoneTop = tile.y + tile.h * PERFECT_ZONE_FRAC_TOP;
+  const zoneBot = tile.y + tile.h * PERFECT_ZONE_FRAC_BOT;
+  return HIT_LINE >= zoneTop && HIT_LINE <= zoneBot;
+}
+
+function registerHit(tile) {
+  tile.hit = true;
+  const perfect = isPerfectHit(tile);
+  const pts = perfect ? 2 : 1;
+  tile.flash = 20;
+  tile.wasPerfect = perfect;
+  score += pts; streak++; tilesHit++;
+
+  if (perfect) {
+    perfectFlash = 28;
+    perfectFlashX = tile.col * COL_W + COL_W / 2;
+    perfectFlashY = tile.y + tile.h / 2;
+  }
+
+  if (streak >= 50)      { blue=true; golden=false; }
+  else if (streak >= 20) { golden=true; }
+  if (!golden && !blue && !purple) hitBarFlash = 12;
+  document.getElementById('score').textContent = score;
+  playNote(NOTE_FREQS[tile.col]);
+  const cfg = DIFFICULTIES[selectedDiff];
+  speed = cfg.startSpeed + Math.floor(tilesHit/8)*cfg.perTier + tilesHit*cfg.perScore;
+  if (tilesHit >= MAX_TILES) {
+    const allPerfect = score === MAX_SCORE; // only if all 75 were perfect hits
+    if (allPerfect) { purple=true; blue=false; golden=false; }
+    endGame(true, allPerfect);
+  }
+}
+
+function doMiss() {
+  // If player was holding, cancel
+  if (activeHoldTile) { activeHoldTile.holding=false; activeHoldTile=null; }
+  streak=0; golden=false; blue=false; purple=false; hitBarFlash=0;
+  endGame(false, false);
+}
+
+// ---- Draw ----
+function draw() {
+  const mode = getMode();
+  ctx.fillStyle='#1a1a1a'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#252525';
+  for (let i=1;i<COLS;i++) ctx.fillRect(i*COL_W-0.5,0,1,H);
+
+  if (mode !== 'normal') {
+    const c=COLORS[mode].bg;
+    ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${0.05+0.025*Math.sin(pulse)})`;
+    ctx.fillRect(0,0,W,H);
+  }
+
+  for (let t of tiles) {
+    const x = t.col*COL_W;
+    const th = t.h;
+
+    if (t.hit) {
+      if (t.flash>0) {
+        const a=(t.flash/20)*0.3;
+        const c = mode!=='normal' ? COLORS[mode].hit : [255,255,255];
+        ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${a})`;
+        ctx.fillRect(x+2,t.y+2,COL_W-4,th-4);
+      }
+    } else {
+      // Tile body
+      if (mode !== 'normal') {
+        const c=COLORS[mode];
+        const p=0.5+0.15*Math.sin(pulse+t.col);
+        ctx.fillStyle=`rgb(${c.tile[0]},${c.tile[1]},${c.tile[2]})`;
+        ctx.fillRect(x+1,t.y,COL_W-2,th);
+        ctx.fillStyle=`rgba(${c.edge[0]},${c.edge[1]},${c.edge[2]},${p})`;
+        ctx.fillRect(x+1,t.y,COL_W-2,3);
+        ctx.fillRect(x+1,t.y+th-3,COL_W-2,3);
+        ctx.fillStyle=`rgba(${c.edge[0]},${c.edge[1]},${c.edge[2]},${0.08+0.05*Math.sin(pulse)})`;
+        ctx.fillRect(x+1,t.y,COL_W-2,th);
+      } else if (t.hold) {
+        // Hold tile: dark green tint
+        ctx.fillStyle='#071a0e';
+        ctx.fillRect(x+1,t.y,COL_W-2,th);
+        // Green edge
+        ctx.fillStyle='rgba(58,255,138,0.35)';
+        ctx.fillRect(x+1,t.y,COL_W-2,3);
+        ctx.fillRect(x+1,t.y+th-3,COL_W-2,3);
+        ctx.fillStyle='rgba(58,255,138,0.07)';
+        ctx.fillRect(x+1,t.y,COL_W-2,th);
+        // Hold lines indicator (3 horizontal dashes)
+        ctx.fillStyle='rgba(58,255,138,0.3)';
+        const mid = t.y + th/2;
+        for (let li=-1;li<=1;li++) {
+          ctx.fillRect(x+COL_W/2-12, mid+li*7-1, 24, 2);
+        }
+      } else if (t.h === TILE_H_SHORT) {
+        // Short tile: orange tint
+        ctx.fillStyle='#1a0c00';
+        ctx.fillRect(x+1,t.y,COL_W-2,th);
+        ctx.fillStyle='rgba(249,115,22,0.5)';
+        ctx.fillRect(x+1,t.y,COL_W-2,2);
+        ctx.fillRect(x+1,t.y+th-2,COL_W-2,2);
+        ctx.fillStyle='rgba(249,115,22,0.08)';
+        ctx.fillRect(x+1,t.y,COL_W-2,th);
+      } else {
+        // Normal tap tile
+        ctx.fillStyle='#0c0c0c';
+        ctx.fillRect(x+1,t.y,COL_W-2,th);
+        ctx.fillStyle='#1d1d1d';
+        ctx.fillRect(x+1,t.y,COL_W-2,3);
+        ctx.fillRect(x+1,t.y+th-3,COL_W-2,3);
+        // Perfect zone: very subtle
+        const pzTop = t.y + th * PERFECT_ZONE_FRAC_TOP;
+        const pzH   = th * (PERFECT_ZONE_FRAC_BOT - PERFECT_ZONE_FRAC_TOP);
+        ctx.fillStyle = 'rgba(255,255,255,0.03)';
+        ctx.fillRect(x+3, pzTop, COL_W-6, pzH);
+        ctx.fillStyle = 'rgba(255,255,255,0.07)';
+        ctx.fillRect(x+3, pzTop, COL_W-6, 1);
+        ctx.fillRect(x+3, pzTop+pzH-1, COL_W-6, 1);
+      }
+
+      // Perfect zone overlay for mode tiles (after the mode body is drawn)
+      if (mode !== 'normal' && !t.hold && t.h !== TILE_H_SHORT) {
+        const pzTop = t.y + th * PERFECT_ZONE_FRAC_TOP;
+        const pzH   = th * (PERFECT_ZONE_FRAC_BOT - PERFECT_ZONE_FRAC_TOP);
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(x+3, pzTop, COL_W-6, pzH);
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(x+3, pzTop, COL_W-6, 1);
+        ctx.fillRect(x+3, pzTop+pzH-1, COL_W-6, 1);
+      }
+
+      // Hold progress bar (fills from left to right at bottom of tile)
+      if (t.hold && t.holding && t.holdProgress > 0) {
+        const barW = (COL_W-4) * t.holdProgress;
+        ctx.fillStyle='rgba(58,255,138,0.85)';
+        ctx.fillRect(x+2, t.y+th-6, barW, 4);
+        // Glow
+        ctx.fillStyle='rgba(58,255,138,0.25)';
+        ctx.fillRect(x+2, t.y+th-10, barW, 4);
+      }
+
+      if (t.flash>0) {
+        ctx.fillStyle=`rgba(255,255,255,${(t.flash/20)*0.12})`;
+        ctx.fillRect(x+1,t.y,COL_W-2,th);
+      }
+    }
+  }
+
+  // Top fade
+  const tg=ctx.createLinearGradient(0,0,0,50);
+  tg.addColorStop(0,'#1a1a1a'); tg.addColorStop(1,'rgba(26,26,26,0)');
+  ctx.fillStyle=tg; ctx.fillRect(0,0,W,50);
+
+  // Streak label
+  if (streak>10) {
+    const emoji = streak>=50?'💎':streak>=20?'🔥':'';
+    ctx.save();
+    ctx.font='500 13px "DM Mono",monospace'; ctx.textAlign='center';
+    const pv=0.7+0.3*Math.sin(pulse*2);
+    if (mode==='purple')      ctx.fillStyle=`rgba(200,140,255,${pv})`;
+    else if (mode==='blue')   ctx.fillStyle=`rgba(0,200,255,${pv})`;
+    else if (mode==='golden') ctx.fillStyle=`rgba(255,200,0,${pv})`;
+    else ctx.fillStyle='rgba(255,255,255,0.7)';
+    ctx.fillText(`${streak}${emoji}`, W/2, 38);
+    ctx.restore();
+  }
+
+  // "Perfect!" flash text
+  if (perfectFlash > 0) {
+    const alpha = perfectFlash / 28;
+    const yOff  = (1 - alpha) * 18; // floats up as it fades
+    ctx.save();
+    ctx.font = '500 12px "DM Mono",monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = `rgba(255,230,80,${alpha})`;
+    ctx.fillText('Perfect!', perfectFlashX, perfectFlashY - 20 - yOff);
+    ctx.restore();
+  }
+  if (mode !== 'normal') {
+    const c=COLORS[mode].edge;
+    const gp=0.6+0.4*Math.sin(pulse*1.5);
+    ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${gp})`;
+    ctx.fillRect(0,HIT_LINE,W,3);
+    const gg=ctx.createLinearGradient(0,HIT_LINE-18,0,HIT_LINE);
+    gg.addColorStop(0,`rgba(${c[0]},${c[1]},${c[2]},0)`);
+    gg.addColorStop(1,`rgba(${c[0]},${c[1]},${c[2]},${0.2*gp})`);
+    ctx.fillStyle=gg; ctx.fillRect(0,HIT_LINE-18,W,18);
+  } else if (hitBarFlash>0) {
+    const a=hitBarFlash/12;
+    ctx.fillStyle=`rgba(80,255,120,${a})`;
+    ctx.fillRect(0,HIT_LINE,W,2.5);
+    const gg=ctx.createLinearGradient(0,HIT_LINE-12,0,HIT_LINE);
+    gg.addColorStop(0,'rgba(80,255,120,0)');
+    gg.addColorStop(1,`rgba(80,255,120,${a*0.3})`);
+    ctx.fillStyle=gg; ctx.fillRect(0,HIT_LINE-12,W,12);
+  } else {
+    ctx.fillStyle='rgba(255,255,255,0.15)';
+    ctx.fillRect(0,HIT_LINE,W,1.5);
+  }
+}
+
+// ---- Tap detection ----
+function tileAtCol(col) {
+  return tiles.find(t =>
+    !t.hit && t.col===col &&
+    t.y <= HIT_LINE && t.y+t.h >= HIT_LINE
+  ) || null;
+}
+
+function handlePress(e) {
+  e.preventDefault();
+  if (!running) return;
+  initAudio();
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=W/rect.width, scaleY=H/rect.height;
+  let cx,cy;
+  if (e.touches) { cx=(e.touches[0].clientX-rect.left)*scaleX; cy=(e.touches[0].clientY-rect.top)*scaleY; }
+  else           { cx=(e.clientX-rect.left)*scaleX;             cy=(e.clientY-rect.top)*scaleY; }
+
+  const col=Math.floor(cx/COL_W);
+  if (col<0||col>=COLS) return;
+
+  const tile = tileAtCol(col);
+  const onTile = tile && cy>=tile.y && cy<=tile.y+tile.h;
+
+  if (onTile) {
+    if (tile.hold) {
+      // Start hold
+      tile.holding=true;
+      activeHoldTile=tile;
+      holdStartTime=performance.now();
+    } else {
+      registerHit(tile);
+    }
+  } else {
+    doMiss();
+  }
+}
+
+function handleRelease(e) {
+  e.preventDefault();
+  if (!running || !activeHoldTile) return;
+  // Released before hold completed → miss
+  if (activeHoldTile.holdProgress < 1) {
+    activeHoldTile.holding=false;
+    activeHoldTile=null;
+    doMiss();
+  }
+}
+
+function playFailMelody() {
+  if (!audioCtx) return;
+  // Descending sad melody: E4 D4 C4 ... then a low thud
+  const notes = [329.63, 293.66, 261.63, 246.94, 220.00];
+  const delays = [0, 0.18, 0.36, 0.52, 0.66];
+  notes.forEach((freq, i) => {
+    const now = audioCtx.currentTime + delays[i];
+    const osc = audioCtx.createOscillator();
+    osc.type = i === notes.length-1 ? 'sine' : 'triangle';
+    osc.frequency.value = freq;
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(i === notes.length-1 ? 0.35 : 0.28, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + (i === notes.length-1 ? 0.7 : 0.28));
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.9);
+  });
+}
+function starsForScore(s) {
+  if (s >= 150) return 3; // Excellent — Platinum
+  if (s >= 100) return 2; // Great    — Diamond
+  if (s >= 50)  return 1; // Good     — Gold
+  return 0;
+}
+
+function tierLabel(s) {
+  if (s >= 150) return 'Excellent';
+  if (s >= 100) return 'Great';
+  if (s >= 50)  return 'Good';
+  return '';
+}
+
+function endGame(won, perfect) {
+  running=false; paused=false;
+  cancelAnimationFrame(animId);
+  draw();
+  if (!won) playFailMelody();
+  if (score > bestScores[selectedDiff]) bestScores[selectedDiff]=score;
+  const stars=starsForScore(score);
+  const tier=tierLabel(score);
+  const cfg=DIFFICULTIES[selectedDiff];
+  document.getElementById('result-sub').textContent = won?'Complete!':'Game Over';
+  const badge=document.getElementById('result-diff');
+  badge.textContent=cfg.label; badge.style.color=cfg.color; badge.style.borderColor=cfg.color;
+  document.getElementById('perfect-label').style.display=perfect?'block':'none';
+
+  // Stars — colour by tier
+  const starEl = document.getElementById('stars-display');
+  starEl.textContent = '★'.repeat(stars)+'☆'.repeat(3-stars);
+  const tierColors = { 3: perfect?'#e2d4ff':'#e5e7eb', 2:'#b9f0ff', 1:'#facc15', 0:'#333' };
+  starEl.style.color = tierColors[stars];
+
+  // Show tier name under stars if earned
+  let tierEl = document.getElementById('tier-label');
+  if (!tierEl) { tierEl=document.createElement('div'); tierEl.id='tier-label'; tierEl.style.cssText='font-size:10px;letter-spacing:0.2em;text-transform:uppercase;margin-top:-4px;'; document.getElementById('stars-display').insertAdjacentElement('afterend',tierEl); }
+  tierEl.textContent = tier;
+  tierEl.style.color = stars===3?(perfect?'#c084fc':'#aaa'):stars===2?'#7dd3fc':stars===1?'#fbbf24':'transparent';
+  document.getElementById('final-score').textContent=score;
+  document.getElementById('best-score').textContent=bestScores[selectedDiff]>0?`Best: ${bestScores[selectedDiff]}`:'';
+  document.getElementById('pause-btn').classList.remove('visible');
+  document.getElementById('legend').classList.remove('visible');
+  showScreen('result-screen');
+}
+
+function gameLoop() { if (!running) return; update(); draw(); animId=requestAnimationFrame(gameLoop); }
+
+function showScreen(id) {
+  ['start-screen','pause-screen','result-screen'].forEach(s=>document.getElementById(s).classList.remove('visible'));
+  if (id) document.getElementById(id).classList.add('visible');
+}
+
+function goHome() {
+  running=false; paused=false; cancelAnimationFrame(animId);
+  golden=false; blue=false; purple=false; activeHoldTile=null;
+  document.getElementById('pause-btn').classList.remove('visible');
+  document.getElementById('legend').classList.remove('visible');
+  showScreen('start-screen');
+}
+
+function launchGame() {
+  initAudio(); showScreen(null);
+  document.getElementById('pause-btn').classList.add('visible');
+  document.getElementById('pause-btn').innerHTML='&#9646;&#9646;';
+  document.getElementById('legend').classList.add('visible');
+  startGame(); running=true; gameLoop();
+}
+
+// Diff buttons
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedDiff=btn.dataset.d;
+  });
+});
+
+document.getElementById('play-btn').addEventListener('click', launchGame);
+document.getElementById('retry-btn').addEventListener('click', ()=>{ golden=false;blue=false;purple=false; launchGame(); });
+document.getElementById('result-home-btn').addEventListener('click', goHome);
+document.getElementById('pause-home-btn').addEventListener('click', goHome);
+document.getElementById('resume-btn').addEventListener('click', ()=>{
+  paused=false; running=true; showScreen(null);
+  document.getElementById('pause-btn').innerHTML='&#9646;&#9646;';
+  gameLoop();
+});
+document.getElementById('pause-btn').addEventListener('click', ()=>{
+  if (!running&&!paused) return;
+  if (paused) {
+    paused=false; running=true; showScreen(null);
+    document.getElementById('pause-btn').innerHTML='&#9646;&#9646;';
+    gameLoop();
+  } else {
+    paused=true; running=false; cancelAnimationFrame(animId);
+    document.getElementById('pause-btn').innerHTML='&#9654;';
+    showScreen('pause-screen');
+  }
+});
+
+canvas.addEventListener('mousedown', handlePress);
+canvas.addEventListener('mouseup',   handleRelease);
+canvas.addEventListener('touchstart',handlePress,   {passive:false});
+canvas.addEventListener('touchend',  handleRelease, {passive:false});
+
+ctx.fillStyle='#1a1a1a'; ctx.fillRect(0,0,W,H);
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stickman Duel</title>
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #231F20;
+    overflow: hidden;
+  }
+  #unity-container {
+    width: 100%;
+    height: 100%;
+  }
+  #unity-canvas {
+    width: 100%;
+    height: 100%;
+    background: #231F20;
+  }
+</style>
+
+<script>
+// =========================
+// FULL GAMEPUSH SAFE STUB
+// =========================
+window.GamePush = {
+  // Core
+  IsMobile: () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+  IsPortrait: () => window.innerHeight > window.innerWidth,
+  IsDev: () => false,
+  IsAllowedOrigin: () => true,
+  Language: () => "en",
+  ChangeLanguage: (lang) => {},
+  PlatformType: () => "WEB",
+  PlatformHasIntegratedAuth: () => false,
+  PlatformIsExternalLinksAllowed: () => true,
+  ServerTime: () => Date.now(),
+
+  // Lifecycle
+  GameReady: () => {},
+  GameplayStart: () => {},
+  GameplayStop: () => {},
+
+  // Ads
+  AdsIsAdblockEnabled: () => false,
+  AdsIsStickyAvailable: () => false,
+  AdsIsFullscreenAvailable: () => false,
+  AdsIsRewardedAvailable: () => false,
+  AdsIsPreloaderAvailable: () => false,
+  AdsIsStickyPlaying: () => false,
+  AdsIsFullscreenPlaying: () => false,
+  AdsIsRewardedPlaying: () => false,
+  AdsIsPreloaderPlaying: () => false,
+  AdsCanShowFullscreenBeforeGamePlay: () => false,
+  AdsShowFullscreen: () => {},
+  AdsShowRewarded: () => {},
+  AdsShowPreloader: () => {},
+  AdsShowSticky: () => {},
+  AdsCloseSticky: () => {},
+
+  // Player
+  PlayerIsLoggedIn: () => false,
+  PlayerIsStub: () => true,
+  PlayerGetID: () => 0,
+  PlayerGetName: () => "Player",
+  PlayerGetScore: () => 0,
+  PlayerGetAvatar: () => "",
+  PlayerGet: () => "",
+  PlayerHas: () => false,
+  PlayerSync: () => {},
+  PlayerLoad: () => {},
+
+  // Variables
+  VariablesHas: () => false,
+  VariablesGet: () => ""
+};
+
+window.onGPInit = () => {};
+window.onGPError = () => {};
+</script>
+</head>
+
+<body>
+<div id="unity-container">
+  <canvas id="unity-canvas"></canvas>
+</div>
+
+<script>
+const buildUrl = "https://cdn.jsdelivr.net/gh/Ieoldj-hs101082/Koans@03568ae5309942037071f3e50daf892ae3539c31/logic";
+
+const config = {
+  dataUrl: buildUrl + "/sd.data.js",
+  frameworkUrl: buildUrl + "/sd.js",
+  codeUrl: buildUrl + "/sd.wasm.js",
+  streamingAssetsUrl: "StreamingAssets",
+
+  companyName: "Custom",
+  productName: "Stickman Duel",
+  productVersion: "1.0"
+};
+
+const canvas = document.querySelector("#unity-canvas");
+
+const loaderScript = document.createElement("script");
+loaderScript.src = buildUrl + "/sd.loader.js";
+loaderScript.onload = () => {
+  createUnityInstance(canvas, config).then((unityInstance) => {
+    window.unityInstance = unityInstance;
+  }).catch((error) => {
+    console.error("Unity Load Error:", error);
+  });
+};
+document.body.appendChild(loaderScript);
+
+// Fix AudioContext restriction
+document.addEventListener("click", () => {
+  if (typeof unityInstance !== "undefined" && unityInstance.Module) {
+    try {
+      unityInstance.Module.resumeMainLoop && unityInstance.Module.resumeMainLoop();
+    } catch(e){}
+  }
+});
+</script>
+
+</body>
+</html>
