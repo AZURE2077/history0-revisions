@@ -442,10 +442,10 @@
                 
                 <iframe 
                   id="game-iframe" 
-                  src="index.html" 
+                  src="" 
                   class="w-full h-full border-none relative z-10 bg-transparent" 
-                  allow="fullscreen; autoplay; keyboard" 
-                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms">
+                  allow="fullscreen; autoplay; keyboard-map; pointer-lock" 
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms allow-pointer-lock">
                 </iframe>
               </div>
             </div>
@@ -522,10 +522,7 @@
     <script>
       lucide.createIcons();
 
-      // ==========================================
-      // OPEN GAME WINDOWS TRACKER
-      // ==========================================
-      let openGameWindows = [];
+      // Games now open in-page — no separate windows needed
 
       function playDing() {
         try {
@@ -620,15 +617,23 @@
 
       const themesList = ['default', 'cyberpunk', 'matrix', 'crimson', 'abyss', 'vaporwave', 'gold'];
 
+      // Safe localStorage wrapper (blocked in cross-origin iframes)
+      const ls = {
+        get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
+        set: function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} },
+        remove: function(k) { try { localStorage.removeItem(k); } catch(e) {} }
+      };
+
       // Load Settings from LocalStorage
-      const savedSettings = localStorage.getItem('dray_settings');
+      const savedSettings = ls.get('dray_settings');
       if (savedSettings) {
-        const parsed = JSON.parse(savedSettings);
-        // Migrate old classroom.google.com default to new VLE default
-        if (parsed.cloakUrl === 'https://classroom.google.com') {
-          parsed.cloakUrl = 'https://vle.learning.moe.edu.sg';
-        }
-        appSettings = { ...appSettings, ...parsed };
+        try {
+          const parsed = JSON.parse(savedSettings);
+          if (parsed.cloakUrl === 'https://classroom.google.com') {
+            parsed.cloakUrl = 'https://vle.learning.moe.edu.sg';
+          }
+          appSettings = { ...appSettings, ...parsed };
+        } catch(e) {}
       }
 
       function applySettings() {
@@ -638,7 +643,7 @@
       }
       
       function saveSettings() {
-        localStorage.setItem('dray_settings', JSON.stringify(appSettings));
+        ls.set('dray_settings', JSON.stringify(appSettings));
         applySettings();
       }
 
@@ -650,9 +655,9 @@
       const viewLauncher = document.getElementById('view-launcher');
       const viewHome = document.getElementById('view-home');
 
-      const isCloaked = window.location.href === 'about:blank' || window.location.href === 'about:srcdoc' || localStorage.getItem('hr_safer_alt_used') === '1';
-      // Clear the flag after reading it so it only skips once per SAFER ALT click
-      localStorage.removeItem('hr_safer_alt_used');
+      const isInIframe = (function() { try { return window.self !== window.top; } catch(e) { return true; } })();
+      const isCloaked = window.location.href === 'about:blank' || window.location.href === 'about:srcdoc' || ls.get('hr_safer_alt_used') === '1' || isInIframe;
+      ls.remove('hr_safer_alt_used');
 
       if (isCloaked) {
         viewLauncher.classList.add('hidden-view');
@@ -668,16 +673,10 @@
       }
 
       document.getElementById('btn-launch-cloaked').addEventListener('click', () => {
-        localStorage.setItem('hr_safer_alt_used', '1');
-        let newWin = window.open('about:blank', '_blank');
-        if (!newWin || newWin.closed || typeof newWin.closed == 'undefined') {
-          alert("Popup blocked! Please allow popups for this site, or just choose 'Play Here'.");
-        } else {
-          newWin.document.open();
-          newWin.document.write(`<!DOCTYPE html>` + document.documentElement.outerHTML);
-          newWin.document.close();
-          window.location.replace(appSettings.cloakUrl || 'https://vle.learning.moe.edu.sg');
-        }
+        viewLauncher.classList.add('hidden-view');
+        viewLauncher.classList.remove('flex');
+        viewHome.classList.remove('hidden-view');
+        viewHome.classList.add('flex');
       });
 
       document.getElementById('btn-play-here').addEventListener('click', () => {
@@ -776,11 +775,13 @@
           // Only trigger ding + in-game popup for actual NEW announcements
           if (!firstAnnouncementLoad && newText && newText !== lastAnnouncementText) {
             playDing();
-            // Notify all open game windows
-            openGameWindows = openGameWindows.filter(w => w && !w.closed);
-            openGameWindows.forEach(w => {
-              try { w.postMessage({ type: 'HR_NEW_ANNOUNCEMENT', text: lastAnnouncementText || '' }, '*'); } catch(e) {}
-            });
+            // Notify the in-page game iframe if a game is running
+            try {
+              const gf = document.getElementById('game-iframe');
+              if (gf && gf.contentWindow) {
+                gf.contentWindow.postMessage({ type: 'HR_NEW_ANNOUNCEMENT', text: newText }, '*');
+              }
+            } catch(e) {}
           }
 
           firstAnnouncementLoad = false;
@@ -834,6 +835,7 @@
 ["G*mes Form","https://docs.google.com/forms/d/e/1FAIpQLScs7kPgU-yqYJYvSddy7jKzq_WOMmNA_Kk0WDWMn71QNBCEPg/viewform?usp=header","bing_images/image_159.webp","Extra"],
 ["Polytrack Form","https://docs.google.com/forms/d/e/1FAIpQLSfCWtuxJMIC4VYdFDwTLNpQjMolgaQnV0QXnJHm52tL85xsgg/viewform?usp=header","bing_images/image_159.webp|blue","Extra"],
 ["Terms & Conditions","tc.html","bing_images/image_505.png","Extra"],
+["The HR Files(All Links)","hrfiles.html","image_99.png","Extra"],
 ["Credits","credits.html","bing_images/image_199.webp","Extra"],
 ["Polytrack Records","polytrack.html","bing_images/image_19.webp","Extra"],
 ["ORIGINAL SITE","ogsite.html","bing_images/image_218.webp","Extra"],
@@ -852,8 +854,8 @@
         ["They Are Coming","they-are-coming.html","img-portal-defenders.jpg","Action"],
         ["Tunnel Rush","tunnel-rush.html","tunnel-rush.png","Arcade"],
         ["Tag","tag.html","tag.png","Multiplayer"],
-        ["Five nights at Epstein's", "https://cookjessie383-wixsite-com.filesusr.com/html/308cff_d7b5efdff8c12e973faa40020d911b3e.html", "https://cdn.jsdelivr.net/gh/gn-math/covers@main/710.png", "Horror"],
-["FNAF 2","https://cookjessie383-wixsite-com.filesusr.com/html/308cff_1c2a06ce7c3dd0d7571a7c8cdf2159bd.html","https://th.bing.com/th/id/OIP.lLRwPUQifXTTaAywBgNtUQHaEK?w=333&h=187&c=7&r=0&o=5&pid=1.7","Horror"],
+        ["Five nights at Epstein's", "https://cookjessie383-wixsite-com.filesusr.com/html/308cff_d7b5efdff8c12e973faa40020d911b3e.html", "image_0091.jpg", "Horror"],
+["FNAF 2","https://cookjessie383-wixsite-com.filesusr.com/html/308cff_1c2a06ce7c3dd0d7571a7c8cdf2159bd.html","image_0092.jpg","Horror"],
                 ["Baldi's Basics","https://cookjessie383-wixsite-com.filesusr.com/html/308cff_b49415c7838d5272bed3689dc5bf5f3a.html","bing_images/image_10.webp","Horror"],
         ["Andy’s apple farm","https://cookjessie383-wixsite-com.filesusr.com/html/308cff_55cf857ecf0f24c03931818ca5d2c64f.html","bing_images/image_11.webp","Horror"],
         ["Backrooms","https://cookjessie383-wixsite-com.filesusr.com/html/308cff_b0fb0d44b318cce53bb222223053649f.html","bing_images/image_12.webp","Horror"],
@@ -991,7 +993,7 @@
         ["Gta vice city","","bing_images/image_145.webp","Action"],
         ["Gorilla tag","https://cookjessie383-wixsite-com.filesusr.com/html/308cff_a6c51ff15e1a14ba87f573e556fbf374.html","bing_images/image_146.webp","Action"],
         ["Pizza tower","https://educateandlearnallabout.sciencevictory.com/gamefile/Pizza%20Tower.html","bing_images/image_147.webp","Action"],
-        ["customer support","https://educateandlearnallabout.sciencevictory.com/games/CustomerSupport/index.html","https://img.itch.zone/aW1nLzIyNDA0OTE0LmpwZw==/original/9EfAmY.jpg","Simulation"],
+        ["customer support","https://educateandlearnallabout.sciencevictory.com/games/CustomerSupport/index.html","csf.jpg","Simulation"],
                ["Baldi basics","https://cookjessie383-wixsite-com.filesusr.com/html/308cff_71b56e8afb366e16b35005ecf06804df.html","bing_images/image_149.webp","Horror"],
               ["Crazy plane landing","https://cookjessie383-wixsite-com.filesusr.com/html/308cff_5693c6ca5a5a524934f89e61e2a2441e.html","bing_images/image_151.webp","Simulation"]
 
@@ -1010,44 +1012,15 @@
       
       let currentCategory = 'All';
 
- function openGame(title, url) {
-        const CDN = 'https://cdn.jsdelivr.net/gh/AZURE2077/history0-revisions@main/';
-        const isRelative = !url.startsWith('http');
-        const fullUrl = isRelative ? CDN + url : url;
-
-        const newWin = window.open('about:blank', '_blank');
-        if (!newWin || newWin.closed) {
-          alert("Popup blocked! Please allow popups for this site.");
-          return;
-        }
-
-        if (isRelative) {
-          // Fetch the game HTML from jsDelivr and write it directly so it actually runs
-          newWin.document.open();
-          newWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;color:#fff;font-family:Arial,sans-serif;font-size:14px;}</style></head><body>Loading ${title}...</body></html>`);
-          newWin.document.close();
-          fetch(fullUrl)
-            .then(r => r.text())
-            .then(html => {
-              // Inject base tag so relative assets (images, audio, js) resolve against CDN
-              const base = '<base href="' + CDN + '">';
-              const patched = html.replace(/(<head[^>]*>)/i, '$1' + base);
-              newWin.document.open();
-              newWin.document.write(patched);
-              newWin.document.close();
-            })
-            .catch(() => {
-              newWin.document.open();
-              newWin.document.write('<body style="color:#fff;background:#000;font-family:Arial;padding:20px">Failed to load game. Try again.</body>');
-              newWin.document.close();
-            });
-        } else {
-          // External URL (Wixsite etc) — keep original iframe wrapper
-          newWin.document.open();
-          newWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;overflow:hidden;background:#000}iframe{position:fixed;top:0;left:0;width:100%;height:100%;border:none}#panicBtn{position:fixed;top:80px;left:20px;z-index:9999;padding:20px 40px;background-color:#0066cc;color:#ffeb3b;text-decoration:none;font-weight:bold;font-size:9px;border-radius:8px;font-family:Arial,sans-serif;box-shadow:0 4px 10px rgba(0,0,0,0.3);display:inline-block}#panicBtn:hover{background-color:#004c99}#hr-notify{display:none;position:fixed;top:20px;left:20px;z-index:99999;background:linear-gradient(90deg,#ff2d78,#ff8c00);color:#fff;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;padding:8px 16px;border-radius:6px;box-shadow:0 0 20px rgba(255,45,120,0.6);letter-spacing:0.05em;cursor:pointer;animation:hrPulse 0.5s ease infinite alternate;}@keyframes hrPulse{from{box-shadow:0 0 10px rgba(255,45,120,0.4);}to{box-shadow:0 0 25px rgba(255,45,120,0.9);}}#hr-modal{display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;}#hr-modal-box{background:#111;border:1px solid #ff2d78;border-radius:12px;padding:24px;max-width:360px;width:90%;color:#fff;font-family:Arial,sans-serif;position:relative;}#hr-modal-title{font-size:13px;font-weight:bold;color:#ff8c00;margin-bottom:12px;letter-spacing:0.05em;}#hr-modal-text{font-size:13px;line-height:1.6;color:#eee;}#hr-modal-close{position:absolute;top:12px;right:14px;background:none;border:none;color:#aaa;font-size:18px;cursor:pointer;line-height:1;}</style></head><body><div id="hr-notify">📢 NEW ANNOUNCEMENT!</div><div id="hr-modal" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;"><div style="background:#111;border:1px solid #ff2d78;border-radius:12px;padding:24px;max-width:360px;width:90%;color:#fff;font-family:Arial,sans-serif;position:relative;"><button id="hr-modal-close" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#aaa;font-size:18px;cursor:pointer;">✕</button><div style="font-size:12px;font-weight:bold;color:#ff8c00;margin-bottom:10px;">📢 ANNOUNCEMENT</div><div id="hr-modal-text" style="font-size:13px;line-height:1.6;color:#eee;"></div></div></div><a href="https://vle.learning.moe.edu.sg" target="_blank" id="panicBtn">Panic Button</a><iframe id="gf" src="${fullUrl}" allowfullscreen allow="fullscreen;autoplay;keyboard" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms allow-pointer-lock"></iframe><script>var skip=["308cff_081f9eeba29467a9d0aa637fd45896f1"];function h(){var f=document.getElementById("gf");if(!f)return;if(skip.some(function(s){return f.src.indexOf(s)>=0}))return;f.style.height=window.innerHeight+"px";}h();window.addEventListener("resize",h);setInterval(h,500);window.addEventListener("message",function(e){if(e.data&&e.data.type==="HR_NEW_ANNOUNCEMENT"){var mt=document.getElementById("hr-modal-text");if(mt)mt.textContent=e.data.text||"";var n=document.getElementById("hr-notify");n.style.display="block";setTimeout(function(){n.style.display="none";},10000);}});document.getElementById("hr-notify").addEventListener("click",function(){var m=document.getElementById("hr-modal");if(m)m.style.display="flex";});document.getElementById("hr-modal-close").addEventListener("click",function(){var m=document.getElementById("hr-modal");if(m)m.style.display="none";});<\/script></body></html>`);
-          newWin.document.close();
-        }
-        openGameWindows.push(newWin);
+      function openGame(title, url) {
+        activeGameTitle.textContent = title;
+        gameIframe.src = url;
+        browseContainer.classList.add('hidden-view');
+        settingsContainer.classList.add('hidden-view');
+        settingsContainer.classList.remove('flex');
+        activeGameContainer.classList.remove('hidden-view');
+        activeGameContainer.classList.add('flex');
+      }
 
       function renderGames(gamesToRender) {
         gamesGrid.innerHTML = ''; 
@@ -1073,12 +1046,7 @@
           const card = document.createElement('div');
           card.className = "group relative bg-theme-card rounded-2xl overflow-hidden border border-theme-text/5 hover:border-theme-accent transition-all duration-300 hover:-translate-y-2 hover:shadow-glow flex flex-col cursor-pointer";
           card.onclick = () => {
-            if (url.includes('docs.google.com') || url.includes('forms.gle')) {
-              const CDN = 'https://cdn.jsdelivr.net/gh/AZURE2077/history0-revisions@main/';
-              window.open(url.startsWith('http') ? url : CDN + url, '_blank');
-            } else {
-              openGame(title, url);
-            }
+            openGame(title, url);
           };
           
           card.innerHTML = `
@@ -1123,12 +1091,26 @@
       });
 
       document.getElementById('btn-fullscreen').addEventListener('click', () => {
-        if (gameIframe.requestFullscreen) {
-          gameIframe.requestFullscreen();
-        } else if (gameIframe.webkitRequestFullscreen) {
-          gameIframe.webkitRequestFullscreen();
-        } else if (gameIframe.msRequestFullscreen) {
-          gameIframe.msRequestFullscreen();
+        const url = gameIframe.src;
+        const title = activeGameTitle.textContent || 'Game';
+        if (!url) return;
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;overflow:hidden;background:#000}iframe{position:fixed;top:0;left:0;width:100%;height:100%;border:none}</style></head><body><iframe src="${url}" allowfullscreen allow="fullscreen;autoplay;keyboard-map;pointer-lock" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms allow-pointer-lock"></iframe></body></html>`;
+        try {
+          const blob = new Blob([html], { type: 'text/html' });
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+        } catch (e) {
+          // Fallback for browsers that block blob URLs
+          const newWin = window.open('', '_blank');
+          if (!newWin) { alert("Popup blocked! Please allow popups for this site."); return; }
+          newWin.document.open();
+          newWin.document.write(html);
+          newWin.document.close();
         }
       });
 
