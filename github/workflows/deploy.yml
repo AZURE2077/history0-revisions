@@ -1,0 +1,22 @@
+name: Test Single Cloudflare Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare Account A
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CF_API_A }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID_A }}
+          projectName: 'history0-revisions' # You can change this to any project name you want in Cloudflare
+          directory: '.'                    # This deploys your main folder files directly
+          branch: 'main'
