@@ -12,9 +12,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Deploy to Cloudflare Account A
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_A }}
           accountId: ${{ secrets.CF_ACCOUNT_ID_A }}
-          command: pages deploy . --project-name=history0-revisions
+          command: pages deploy . --project-name=history0-revisions --branch=main
